@@ -1,6 +1,8 @@
+# Thang Le 
+# MIPS 1 Part 3
+# Adv Processors 
 
-
-.data			# What follows will be data
+.data			
 	inputEquation: .space 64	# set aside 64 bytes to store the input equation
 	prompt: .asciiz "\nEnter MATLAB expression\n"
 	start: .asciiz ">>> "
@@ -25,7 +27,7 @@ main:
 	li	$v0, 8	# The system call code to read a string input
 	syscall
 	
-	move $t1, $a0 # store address of word in temporary register
+	move $t1, $a0 	# store address of word in temporary register
 	move $t4, $zero # reset parenthesis counter
 	move $t5, $zero # reset parenthesis counter
 

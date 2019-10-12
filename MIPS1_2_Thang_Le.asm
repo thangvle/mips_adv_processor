@@ -1,3 +1,7 @@
+# Thang Le 
+# MIPS 1 Part 2
+# Adv Processors 
+
 .data 
 	prompt: .asciiz "\nEnter number for factorial: \n"
 	ans: .asciiz "Result: "
@@ -36,15 +40,15 @@ factorial:
 	jr $ra
 	
 print: 
-
-	# copy value from $t1 (product) to $a0 for displaying argument
-	li $v0, 1
-	move $a0, $t1
-	syscall
 	
 	# print ans 
 	li $v0, 4
 	la $a0, ans
+	syscall
+
+	# copy value from $t1 (product) to $a0 for displaying argument
+	li $v0, 1
+	move $a0, $t1
 	syscall
 	
 	# return to caller
