@@ -1,15 +1,17 @@
 .data 
 
 prompt: .asciiz "\n>> " # Prompt the user
+new_line: .asciiz "\n"
 userInput: .space 64
 syntax_error: .asciiz "Invalid Syntax\n"
 invalidChar: .asciiz "Invalid character input\n" 
-quit: .asciiz "quit\n" 
+
 sign: .asciiz "+-*/"
 
 
 .text
 main: 
+	la $s0, userInput 
 	# load prompt
 	li $v0, 4
 	la $a0, prompt 
@@ -23,12 +25,24 @@ main:
 	# validity check 
 	jal readInputLoop
 	
-	la $a0, userInput 
+	move $t0, $a0
+	
 	la $t1, sign 
 	jal validityCheck 
 	
 	jal calculation 
 
+	lw $t0, ($sp)		# Load result from stack
+	move $a0, $t0
+	#mtc1 $t0, $f12
+
+	li	$v0, 1
+	syscall
+	la	$a0, new_line		# Print '\n'
+	li	$v0, 4
+	syscall				
+		
+	j main
 readInputLoop: 
 	lb $t0, ($a0) 		# load byte from input at $a0 to temp reg $t0 
 	addi $a0, $a0, 1	# advance to next char
@@ -100,10 +114,10 @@ calculation:
 		# while ( read_char != '\0' and (read_char == '-' or read_char == '+') )
 calculation_loop:
 		lb	$t2, ($s0)		# Read char
-		sne	$t3, $t2, 0		# char != \0 ?
-		seq	$t4, $t2, 45		# char == '-' ?
-		seq	$t5, $t2, 43		# char == '+' ?
-		
+		sne	$t3, $t2, 0		# check if char != \0 
+		seq	$t4, $t2, 45		# check if char == '-' ?
+		seq	$t5, $t2, 43		# check if char == '+' ?
+		  
 		addi	$sp, $sp, -4
 		sw	$t5, ($sp)		# Save boolean "Is this addition(+) operation" to stack
 				
@@ -120,17 +134,21 @@ calculation_loop:
 		addi	$sp, $sp, 4
 		lw	$t6, ($sp)		# Load first operand
 
-		mtc1	$t6, $f2		# First operand -> $f2
-		mtc1	$t4, $f4		# Second operand -> $f4	
+		#mtc1	$t6, $f2		# First operand -> $f2
+		#mtc1	$t4, $f4		# Second operand -> $f4	
 		beq	$t5, 1, calculation_add
 		
 calculation_sub:
-		sub.s	$f2, $f2, $f4		# Substitute the operands to $f2
-		swc1	$f2, ($sp)		# Move result to stack
+		#sub.s	$f2, $f2, $f4		# Substitute the operands to $f2
+		#swc1	$f2, ($sp)		# Move result to stack
+		sub 	$t6, $t4, $t4
+		sw	$t6, ($sp)
 		j	calculation_loop
 calculation_add:
-		add.s	$f2, $f2, $f4		# Add the operands to $f2
-		swc1	$f2, ($sp)		# Move result to stack	
+		#add.s	$f2, $f2, $f4		# Add the operands to $f2
+		#swc1	$f2, ($sp)		# Move result to stack	
+		add	$t6, $t4, $t4
+		sw 	$t6, ($sp) 
 		j	calculation_loop
 
 calculation_return:
@@ -171,15 +189,20 @@ term_loop:
 		addi	$sp, $sp, 4
 		lw	$t6, ($sp)		# Load first operand
 
-		mtc1	$t6, $f2		# First operand -> $f2
-		mtc1	$t4, $f4		# Second operand -> $f4	
+		#mtc1	$t6, $f2		# First operand -> $f2
+		#mtc1	$t4, $f4		# Second operand -> $f4	
 		beq	$t5, 1, term_mul
 		
-term_div:	div.s	$f2, $f2, $f4		# Divide the operands to $f2
-		swc1	$f2, ($sp)		# Move result to stack
+term_div:	#div.s	$f2, $f2, $f4		# Divide the operands to $f2
+		#swc1	$f2, ($sp)		# Move result to stack
+		div	$t6, $t4, $t4
+		sw	$t6, ($sp)
 		j	term_loop
-term_mul:	mul.s	$f2, $f2, $f4		# Multiply the operands to $f2
-		swc1	$f2, ($sp)		# Move result to stack	
+
+term_mul:	#mul.s	$f2, $f2, $f4		# Multiply the operands to $f2
+		#swc1	$f2, ($sp)		# Move result to stack	
+		mul 	$t6, $t4, $t4
+		sw 	$t6, ($sp) 
 		j	term_loop
 
 term_return:	addi	$sp, $sp, 4
@@ -267,10 +290,11 @@ convert_loop:	lb	$t4, ($s0)		# Read digit
 		add	$s0, $s0, $t0		# Move cursor back to last digit
 		addi	$s0, $s0, 1		# Next char
 						
-atof_return:	mtc1	$t6, $f0		# Move total number to coprocessor
-		cvt.s.w	$f0, $f0
+atof_return:	#mtc1	$t6, $f0		# Move total number to coprocessor
+		#cvt.s.w	$f0, $f0
 		addi	$sp, $sp, -4
-		swc1	$f0, ($sp)		# Save converted number to stack
+		#swc1	$f0, ($sp)		# Save converted number to stack
+		sw 	$t6, ($sp) 
 		jr	$ra			# Jump back to number
 
 	
